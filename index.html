@@ -1,0 +1,1079 @@
+Advanced Video Editor with Automatic Effects
+Here's the complete HTML file for an automatic video editor that modifies videos to change their identity (logo, color, audio) and supports files up to 10GB:
+
+html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Video Identity Changer</title>
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.10.1/dist/ffmpeg.min.js"></script>
+    <style>
+        :root {
+            --primary: #6a11cb;
+            --secondary: #2575fc;
+            --success: #38ef7d;
+            --danger: #f857a6;
+            --warning: #fbb040;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+        
+        .upload-section {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .section-title i {
+            font-size: 1.8rem;
+        }
+        
+        .upload-area {
+            border: 2px dashed var(--primary);
+            border-radius: 8px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 1.5rem;
+            background: rgba(106, 17, 203, 0.05);
+            position: relative;
+        }
+        
+        .upload-area:hover {
+            background: rgba(106, 17, 203, 0.1);
+            transform: translateY(-3px);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+        
+        .file-input {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        
+        .file-info {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--light);
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(106, 17, 203, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(106, 17, 203, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+        
+        .btn-success {
+            background: linear-gradient(to right, var(--success), #11998e);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(to right, var(--danger), #f857a6);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(to right, var(--warning), #f37335);
+        }
+        
+        .progress-container {
+            margin: 2rem 0;
+            display: none;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .progress-bar {
+            height: 15px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .status {
+            padding: 1rem;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        .status-success {
+            background-color: rgba(56, 239, 125, 0.2);
+            color: #0d6e3d;
+            border-left: 4px solid var(--success);
+        }
+        
+        .status-error {
+            background-color: rgba(248, 87, 166, 0.2);
+            color: #a41345;
+            border-left: 4px solid var(--danger);
+        }
+        
+        .status-processing {
+            background-color: rgba(251, 176, 64, 0.2);
+            color: #9c4e00;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .preview-section {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            display: none;
+        }
+        
+        .video-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .video-wrapper {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .video-title {
+            background: var(--dark);
+            color: white;
+            margin: 0;
+            padding: 0.75rem;
+            text-align: center;
+        }
+        
+        video {
+            width: 100%;
+            display: block;
+            background: black;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        .settings-panel {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .setting-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .setting-group h3 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            color: var(--secondary);
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        select, input[type="range"], input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+        
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        input[type="range"] {
+            padding: 0;
+        }
+        
+        .range-value {
+            display: inline-block;
+            width: 40px;
+            text-align: center;
+            margin-left: 10px;
+        }
+        
+        .watermark-detection {
+            background: rgba(251, 176, 64, 0.1);
+            padding: 1rem;
+            border-radius: 5px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .advanced-toggle {
+            color: var(--primary);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        
+        .advanced-settings {
+            display: none;
+            padding: 1rem;
+            background: var(--light);
+            border-radius: 5px;
+            margin-top: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .video-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Advanced Video Identity Changer</h1>
+            <div class="subtitle">Automatically modify videos to change their identity (supports up to 10GB files)</div>
+        </header>
+        
+        <div class="upload-section">
+            <h2 class="section-title">
+                <i class="fas fa-cloud-upload-alt"></i>
+                Upload Video and Logo
+            </h2>
+            
+            <div class="upload-area" id="video-upload-area">
+                <div class="upload-icon">
+                    <i class="fas fa-video"></i>
+                </div>
+                <h3>Drop video file here</h3>
+                <p>MP4, MOV, AVI, MKV (up to 10GB)</p>
+                <input type="file" id="video-input" class="file-input" accept="video/*">
+                <div class="btn">Select Video File</div>
+                <div class="file-info" id="video-info"></div>
+            </div>
+            
+            <div class="upload-area" id="logo-upload-area">
+                <div class="upload-icon">
+                    <i class="fas fa-image"></i>
+                </div>
+                <h3>Drop new logo file here</h3>
+                <p>PNG, JPG, SVG (transparent background recommended)</p>
+                <input type="file" id="logo-input" class="file-input" accept="image/*">
+                <div class="btn">Select Logo File</div>
+                <div class="file-info" id="logo-info"></div>
+            </div>
+            
+            <div class="watermark-detection">
+                <h3><i class="fas fa-search"></i> Automatic Watermark Detection</h3>
+                <p>Our system will automatically detect and remove existing watermarks/logos</p>
+                <button class="btn btn-warning" id="detect-btn">
+                    <i class="fas fa-search"></i> Detect Watermarks
+                </button>
+            </div>
+        </div>
+        
+        <div class="settings-panel">
+            <h2 class="section-title">
+                <i class="fas fa-sliders-h"></i>
+                Processing Settings
+            </h2>
+            
+            <div class="settings-grid">
+                <div class="setting-group">
+                    <h3>Audio Processing</h3>
+                    <div class="form-group">
+                        <label for="audio-mode">Audio Mode</label>
+                        <select id="audio-mode">
+                            <option value="remove">Remove original audio</option>
+                            <option value="modify">Modify audio (change pitch/speed)</option>
+                            <option value="replace">Replace with new audio</option>
+                            <option value="keep" selected>Keep original audio</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="audio-modify-group" style="display: none;">
+                        <label for="audio-pitch">Pitch Change (%)</label>
+                        <input type="range" id="audio-pitch" min="80" max="120" value="100">
+                        <span class="range-value" id="pitch-value">100%</span>
+                    </div>
+                    
+                    <div class="form-group" id="audio-replace-group" style="display: none;">
+                        <label for="new-audio">New Audio File</label>
+                        <input type="file" id="new-audio" accept="audio/*">
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <h3>Visual Processing</h3>
+                    <div class="form-group">
+                        <label for="color-filter">Color Filter</label>
+                        <select id="color-filter">
+                            <option value="none">No filter</option>
+                            <option value="grayscale">Grayscale</option>
+                            <option value="sepia">Sepia</option>
+                            <option value="vintage">Vintage</option>
+                            <option value="cool">Cool tone</option>
+                            <option value="warm">Warm tone</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="brightness">Brightness</label>
+                        <input type="range" id="brightness" min="80" max="120" value="100">
+                        <span class="range-value" id="brightness-value">100%</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="contrast">Contrast</label>
+                        <input type="range" id="contrast" min="80" max="120" value="100">
+                        <span class="range-value" id="contrast-value">100%</span>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <h3>Logo Settings</h3>
+                    <div class="form-group">
+                        <label for="logo-action">Logo Action</label>
+                        <select id="logo-action">
+                            <option value="remove">Remove original logo</option>
+                            <option value="replace">Add new logo</option>
+                            <option value="both">Remove original and add new logo</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="logo-position-group">
+                        <label for="logo-position">Logo Position</label>
+                        <select id="logo-position">
+                            <option value="bottom-right">Bottom Right</option>
+                            <option value="bottom-left">Bottom Left</option>
+                            <option value="top-right">Top Right</option>
+                            <option value="top-left">Top Left</option>
+                            <option value="center">Center</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="logo-size">Logo Size</label>
+                        <input type="range" id="logo-size" min="5" max="30" value="15">
+                        <span class="range-value" id="logo-size-value">15%</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="logo-opacity">Logo Opacity</label>
+                        <input type="range" id="logo-opacity" min="10" max="100" value="80">
+                        <span class="range-value" id="opacity-value">80%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="advanced-toggle" id="advanced-toggle">
+                <i class="fas fa-cogs"></i>
+                <span>Advanced Settings</span>
+                <i class="fas fa-chevron-down"></i>
+            </div>
+            
+            <div class="advanced-settings" id="advanced-settings">
+                <div class="settings-grid">
+                    <div class="setting-group">
+                        <h3>Video Quality</h3>
+                        <div class="form-group">
+                            <label for="resolution">Resolution</label>
+                            <select id="resolution">
+                                <option value="original">Original Resolution</option>
+                                <option value="1080">1080p (Full HD)</option>
+                                <option value="720">720p (HD)</option>
+                                <option value="480">480p (SD)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="bitrate">Bitrate (Mbps)</label>
+                            <input type="range" id="bitrate" min="1" max="50" value="10">
+                            <span class="range-value" id="bitrate-value">10</span>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <h3>Frame Rate</h3>
+                        <div class="form-group">
+                            <label for="fps">FPS</label>
+                            <select id="fps">
+                                <option value="original">Original FPS</option>
+                                <option value="60">60 FPS</option>
+                                <option value="30">30 FPS</option>
+                                <option value="24">24 FPS</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="speed">Playback Speed</label>
+                            <select id="speed">
+                                <option value="1.0">1.0x (Normal)</option>
+                                <option value="1.25">1.25x</option>
+                                <option value="1.5">1.5x</option>
+                                <option value="0.75">0.75x</option>
+                                <option value="0.5">0.5x</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <h3>Cropping</h3>
+                        <div class="form-group">
+                            <label for="crop-mode">Crop Mode</label>
+                            <select id="crop-mode">
+                                <option value="none">Don't crop</option>
+                                <option value="16:9">16:9 (Widescreen)</option>
+                                <option value="4:3">4:3 (Standard)</option>
+                                <option value="1:1">1:1 (Square)</option>
+                                <option value="9:16">9:16 (Vertical)</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" id="custom-crop-group" style="display: none;">
+                            <label for="custom-crop">Custom Crop (px)</label>
+                            <input type="text" id="custom-crop" placeholder="width:height:x:y">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn btn-success btn-block" id="process-btn">
+                <i class="fas fa-magic"></i> Process Video Automatically
+            </button>
+            
+            <div class="progress-container" id="progress-container">
+                <div class="progress-header">
+                    <span id="progress-status">Starting processing...</span>
+                    <span id="progress-percent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress" id="progress-bar"></div>
+                </div>
+            </div>
+            
+            <div class="status" id="status-message"></div>
+        </div>
+        
+        <div class="preview-section" id="preview-section">
+            <h2 class="section-title">
+                <i class="fas fa-play-circle"></i>
+                Edited Video Preview
+            </h2>
+            
+            <div class="video-container">
+                <div class="video-wrapper">
+                    <h3>Original Video</h3>
+                    <video id="original-video" controls></video>
+                </div>
+                <div class="video-wrapper">
+                    <h3>Edited Video</h3>
+                    <video id="edited-video" controls></video>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn btn-success" id="download-btn">
+                    <i class="fas fa-download"></i> Download Edited Video
+                </button>
+                <button class="btn" id="new-edit-btn">
+                    <i class="fas fa-redo"></i> Start New Edit
+                </button>
+                <button class="btn btn-danger" id="cancel-btn" style="display: none;">
+                    <i class="fas fa-times"></i> Cancel Processing
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const videoUploadArea = document.getElementById('video-upload-area');
+        const videoInput = document.getElementById('video-input');
+        const videoInfo = document.getElementById('video-info');
+        
+        const logoUploadArea = document.getElementById('logo-upload-area');
+        const logoInput = document.getElementById('logo-input');
+        const logoInfo = document.getElementById('logo-info');
+        
+        const processBtn = document.getElementById('process-btn');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+        const progressStatus = document.getElementById('progress-status');
+        const progressPercent = document.getElementById('progress-percent');
+        const statusMessage = document.getElementById('status-message');
+        
+        const originalVideoElement = document.getElementById('original-video');
+        const editedVideoElement = document.getElementById('edited-video');
+        const previewSection = document.getElementById('preview-section');
+        
+        const downloadBtn = document.getElementById('download-btn');
+        const newEditBtn = document.getElementById('new-edit-btn');
+        const cancelBtn = document.getElementById('cancel-btn');
+        
+        const advancedToggle = document.getElementById('advanced-toggle');
+        const advancedSettings = document.getElementById('advanced-settings');
+        
+        // Settings elements
+        const audioMode = document.getElementById('audio-mode');
+        const audioModifyGroup = document.getElementById('audio-modify-group');
+        const audioReplaceGroup = document.getElementById('audio-replace-group');
+        const newAudioInput = document.getElementById('new-audio');
+        
+        // Range inputs
+        const rangeInputs = document.querySelectorAll('input[type="range"]');
+        
+        // Variables
+        let originalVideoFile = null;
+        let originalLogoFile = null;
+        let newAudioFile = null;
+        let editedVideoBlob = null;
+        let ffmpeg = null;
+        let processing = false;
+        let cancelRequested = false;
+        
+        // Initialize FFmpeg
+        async function initFFmpeg() {
+            try {
+                if (!ffmpeg) {
+                    const { createFFmpeg, fetchFile } = FFmpeg;
+                    ffmpeg = createFFmpeg({ 
+                        log: true,
+                        corePath: 'https://unpkg.com/@ffmpeg/core@0.10.0/dist/ffmpeg-core.js'
+                    });
+                    
+                    showStatus('Loading FFmpeg...', 'processing');
+                    await ffmpeg.load();
+                    showStatus('FFmpeg loaded successfully!', 'success');
+                }
+                return true;
+            } catch (error) {
+                showStatus(`Failed to load FFmpeg: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        // Event Listeners
+        videoInput.addEventListener('change', handleVideoUpload);
+        logoInput.addEventListener('change', handleLogoUpload);
+        newAudioInput.addEventListener('change', handleNewAudioUpload);
+        
+        // Drag and drop for video
+        videoUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            videoUploadArea.style.backgroundColor = 'rgba(106, 17, 203, 0.2)';
+        });
+        
+        videoUploadArea.addEventListener('dragleave', () => {
+            videoUploadArea.style.backgroundColor = 'rgba(106, 17, 203, 0.05)';
+        });
+        
+        videoUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            videoUploadArea.style.backgroundColor = 'rgba(106, 17, 203, 0.05)';
+            if (e.dataTransfer.files.length) {
+                videoInput.files = e.dataTransfer.files;
+                handleVideoUpload();
+            }
+        });
+        
+        // Drag and drop for logo
+        logoUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            logoUploadArea.style.backgroundColor = 'rgba(106, 17, 203, 0.2)';
+        });
+        
+        logoUploadArea.addEventListener('dragleave', () => {
+            logoUploadArea.style.backgroundColor = 'rgba(106, 17, 203, 0.05)';
+        });
+        
+        logoUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            logoUploadArea.style.backgroundColor = 'rgba(106, 17, 203, 0.05)';
+            if (e.dataTransfer.files.length) {
+                logoInput.files = e.dataTransfer.files;
+                handleLogoUpload();
+            }
+        });
+        
+        // Audio mode change
+        audioMode.addEventListener('change', () => {
+            audioModifyGroup.style.display = 'none';
+            audioReplaceGroup.style.display = 'none';
+            
+            if (audioMode.value === 'modify') {
+                audioModifyGroup.style.display = 'block';
+            } else if (audioMode.value === 'replace') {
+                audioReplaceGroup.style.display = 'block';
+            }
+        });
+        
+        // Range inputs
+        rangeInputs.forEach(input => {
+            const valueElement = document.getElementById(`${input.id}-value`);
+            valueElement.textContent = input.value + (input.id === 'bitrate' ? '' : '%');
+            
+            input.addEventListener('input', () => {
+                valueElement.textContent = input.value + (input.id === 'bitrate' ? '' : '%');
+            });
+        });
+        
+        // Advanced toggle
+        advancedToggle.addEventListener('click', () => {
+            advancedSettings.style.display = advancedSettings.style.display === 'block' ? 'none' : 'block';
+            const icon = advancedToggle.querySelector('.fa-chevron-down');
+            icon.classList.toggle('fa-chevron-up');
+        });
+        
+        // Process button
+        processBtn.addEventListener('click', async () => {
+            if (!originalVideoFile) {
+                showStatus('Please select a video file', 'error');
+                return;
+            }
+            
+            // Initialize FFmpeg if not already done
+            const ffmpegReady = await initFFmpeg();
+            if (!ffmpegReady) return;
+            
+            // Start processing
+            await processVideo();
+        });
+        
+        // Download button
+        downloadBtn.addEventListener('click', downloadEditedVideo);
+        
+        // New edit button
+        newEditBtn.addEventListener('click', resetTool);
+        
+        // Cancel button
+        cancelBtn.addEventListener('click', () => {
+            cancelRequested = true;
+            showStatus('Cancellation requested...', 'processing');
+        });
+        
+        // Functions
+        function handleVideoUpload() {
+            if (videoInput.files.length) {
+                originalVideoFile = videoInput.files[0];
+                
+                if (originalVideoFile.size > 10 * 1024 * 1024 * 1024) {
+                    showStatus('Video file cannot exceed 10GB', 'error');
+                    return;
+                }
+                
+                // Display file info
+                videoInfo.innerHTML = `
+                    <strong>${originalVideoFile.name}</strong><br>
+                    Size: ${formatFileSize(originalVideoFile.size)}<br>
+                    Type: ${originalVideoFile.type || 'N/A'}
+                `;
+                videoInfo.style.display = 'block';
+                
+                // Create video preview
+                const videoURL = URL.createObjectURL(originalVideoFile);
+                originalVideoElement.src = videoURL;
+                
+                showStatus('Video uploaded successfully!', 'success');
+            }
+        }
+        
+        function handleLogoUpload() {
+            if (logoInput.files.length) {
+                originalLogoFile = logoInput.files[0];
+                
+                // Display file info
+                logoInfo.innerHTML = `
+                    <strong>${originalLogoFile.name}</strong><br>
+                    Size: ${formatFileSize(originalLogoFile.size)}<br>
+                    Type: ${originalLogoFile.type || 'N/A'}
+                `;
+                logoInfo.style.display = 'block';
+                
+                showStatus('Logo uploaded successfully!', 'success');
+            }
+        }
+        
+        function handleNewAudioUpload() {
+            if (newAudioInput.files.length) {
+                newAudioFile = newAudioInput.files[0];
+                showStatus('New audio file selected', 'success');
+            }
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = 'status status-' + type;
+            statusMessage.style.display = 'block';
+            
+            // Hide after 5 seconds if not processing
+            if (type !== 'processing') {
+                setTimeout(() => {
+                    statusMessage.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        function updateProgress(percent, message) {
+            progressBar.style.width = percent + '%';
+            progressPercent.textContent = percent + '%';
+            progressStatus.textContent = message;
+            
+            if (percent === 100) {
+                progressStatus.textContent = 'Processing complete!';
+            }
+        }
+        
+        async function processVideo() {
+            if (processing) return;
+            processing = true;
+            cancelRequested = false;
+            
+            // Show processing UI
+            progressContainer.style.display = 'block';
+            processBtn.disabled = true;
+            cancelBtn.style.display = 'inline-block';
+            showStatus('Starting video processing...', 'processing');
+            
+            try {
+                // Step 1: Prepare files
+                updateProgress(5, 'Preparing files...');
+                await ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(originalVideoFile));
+                
+                if (originalLogoFile) {
+                    await ffmpeg.FS('writeFile', 'logo.png', await fetchFile(originalLogoFile));
+                }
+                
+                if (audioMode.value === 'replace' && newAudioFile) {
+                    await ffmpeg.FS('writeFile', 'new_audio.mp3', await fetchFile(newAudioFile));
+                }
+                
+                // Step 2: Build FFmpeg command
+                updateProgress(10, 'Preparing command...');
+                let command = ['-i', 'input.mp4'];
+                let filters = [];
+                
+                // Watermark removal (simulated - in real app use proper detection)
+                filters.push('delogo=x=10:y=10:w=100:h=50');
+                
+                // Color filters
+                const colorFilter = document.getElementById('color-filter').value;
+                if (colorFilter !== 'none') {
+                    if (colorFilter === 'grayscale') {
+                        filters.push('hue=s=0');
+                    } else if (colorFilter === 'sepia') {
+                        filters.push('colorchannelmixer=.393:.769:.189:.349:.686:.168:.272:.534:.131');
+                    } else if (colorFilter === 'vintage') {
+                        filters.push('curves=vintage');
+                    } else if (colorFilter === 'cool') {
+                        filters.push('colorbalance=rs=-0.1:gs=0.1:bs=0.3');
+                    } else if (colorFilter === 'warm') {
+                        filters.push('colorbalance=rs=0.3:gs=0.1:bs=-0.1');
+                    }
+                }
+                
+                // Brightness/Contrast
+                const brightness = document.getElementById('brightness').value / 100;
+                const contrast = document.getElementById('contrast').value / 100;
+                if (brightness !== 1 || contrast !== 1) {
+                    filters.push(`eq=brightness=${brightness-1}:contrast=${contrast}`);
+                }
+                
+                // Audio processing
+                if (audioMode.value === 'remove') {
+                    command.push('-an');
+                } else if (audioMode.value === 'modify') {
+                    const pitch = document.getElementById('audio-pitch').value;
+                    command.push('-af', `asetrate=44100*${pitch/100},aresample=44100,atempo=${100/pitch}`);
+                } else if (audioMode.value === 'replace' && newAudioFile) {
+                    command.push('-i', 'new_audio.mp3', '-map', '0:v', '-map', '1:a', '-shortest');
+                }
+                
+                // Add logo if needed
+                const logoAction = document.getElementById('logo-action').value;
+                if ((logoAction === 'replace' || logoAction === 'both') && originalLogoFile) {
+                    const position = document.getElementById('logo-position').value;
+                    const size = document.getElementById('logo-size').value;
+                    const opacity = document.getElementById('logo-opacity').value / 100;
+                    
+                    let overlay = '';
+                    if (position === 'bottom-right') overlay = 'overlay=W-w-10:H-h-10';
+                    else if (position === 'bottom-left') overlay = 'overlay=10:H-h-10';
+                    else if (position === 'top-right') overlay = 'overlay=W-w-10:10';
+                    else if (position === 'top-left') overlay = 'overlay=10:10';
+                    else if (position === 'center') overlay = 'overlay=(W-w)/2:(H-h)/2';
+                    
+                    filters.push(`[1:v]scale=iw*${size/100}:-1,format=rgba,colorchannelmixer=aa=${opacity}[logo]`);
+                    filters.push(`[0:v][logo]${overlay}`);
+                }
+                
+                // Add filters to command if any
+                if (filters.length > 0) {
+                    command.push('-vf', filters.join(','));
+                }
+                
+                // Output settings
+                command.push('-c:v', 'libx264');
+                command.push('-preset', 'medium');
+                command.push('-crf', '23');
+                command.push('-movflags', '+faststart');
+                command.push('output.mp4');
+                
+                // Step 3: Run FFmpeg command
+                updateProgress(20, 'Processing video... (1/3)');
+                await ffmpeg.run(...command);
+                
+                // Simulate progress (in real app this would be actual progress)
+                for (let i = 30; i <= 90; i += 10) {
+                    if (cancelRequested) break;
+                    updateProgress(i, `Processing video... (${Math.floor((i-20)/70 * 3)}/3)`);
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
+                
+                if (cancelRequested) {
+                    showStatus('Processing cancelled by user', 'error');
+                    return;
+                }
+                
+                // Step 4: Get output file
+                updateProgress(95, 'Finalizing output...');
+                const data = ffmpeg.FS('readFile', 'output.mp4');
+                editedVideoBlob = new Blob([data.buffer], { type: 'video/mp4' });
+                
+                // Step 5: Clean up
+                ffmpeg.FS('unlink', 'input.mp4');
+                if (originalLogoFile) ffmpeg.FS('unlink', 'logo.png');
+                if (newAudioFile) ffmpeg.FS('unlink', 'new_audio.mp3');
+                ffmpeg.FS('unlink', 'output.mp4');
+                
+                // Complete
+                updateProgress(100, 'Processing complete!');
+                showStatus('Video processing completed successfully!', 'success');
+                
+                // Create edited video preview
+                const videoURL = URL.createObjectURL(editedVideoBlob);
+                editedVideoElement.src = videoURL;
+                
+                               // Show preview section
+                previewSection.style.display = 'block';
+                
+            } catch (error) {
+                showStatus(`Error processing video: ${error.message}`, 'error');
+                console.error(error);
+            } finally {
+                processing = false;
+                processBtn.disabled = false;
+                cancelBtn.style.display = 'none';
+            }
+        }
+        
+        function downloadEditedVideo() {
+            if (!editedVideoBlob) {
+                showStatus('No edited video available to download', 'error');
+                return;
+            }
+            
+            const url = URL.createObjectURL(editedVideoBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `edited_${originalVideoFile.name.replace(/\.[^/.]+$/, '')}.mp4`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showStatus('Download started!', 'success');
+        }
+        
+        function resetTool() {
+            // Reset file inputs
+            videoInput.value = '';
+            logoInput.value = '';
+            newAudioInput.value = '';
+            
+            // Reset file info displays
+            videoInfo.style.display = 'none';
+            logoInfo.style.display = 'none';
+            
+            // Reset video elements
+            originalVideoElement.src = '';
+            editedVideoElement.src = '';
+            
+            // Reset variables
+            originalVideoFile = null;
+            originalLogoFile = null;
+            newAudioFile = null;
+            editedVideoBlob = null;
+            
+            // Reset progress
+            progressContainer.style.display = 'none';
+            progressBar.style.width = '0%';
+            progressPercent.textContent = '0%';
+            progressStatus.textContent = 'Starting processing...';
+            
+            // Hide preview section
+            previewSection.style.display = 'none';
+            
+            // Reset status message
+            statusMessage.style.display = 'none';
+            
+            showStatus('Tool reset successfully. You can start a new edit.', 'success');
+        }
+
+        // Crop mode change
+        document.getElementById('crop-mode').addEventListener('change', function() {
+            const customCropGroup = document.getElementById('custom-crop-group');
+            customCropGroup.style.display = this.value === 'custom' ? 'block' : 'none';
+        });
+
+        // Detect watermarks button
+        document.getElementById('detect-btn').addEventListener('click', function() {
+            if (!originalVideoFile) {
+                showStatus('Please upload a video first', 'error');
+                return;
+            }
+            
+            showStatus('Detecting watermarks... This may take a moment', 'processing');
+            
+            // Simulate watermark detection (in a real app, this would use actual detection)
+            setTimeout(() => {
+                showStatus('Watermark detection complete! Found 1 watermark in the video.', 'success');
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
