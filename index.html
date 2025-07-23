@@ -1,13 +1,9 @@
-Advanced Video Editor with Automatic Effects
-Here's the complete HTML file for an automatic video editor that modifies videos to change their identity (logo, color, audio) and supports files up to 10GB:
-
-html
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Video Identity Changer</title>
+    <title>Advanced Video Editor - Auto Background Removal</title>
     <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.10.1/dist/ffmpeg.min.js"></script>
     <style>
         :root {
@@ -337,6 +333,14 @@ html
             margin-top: 1rem;
         }
         
+        .bg-options {
+            background: rgba(67, 97, 238, 0.1);
+            padding: 1rem;
+            border-radius: 5px;
+            margin-top: 1rem;
+            border-left: 4px solid var(--primary);
+        }
+        
         @media (max-width: 768px) {
             .video-container {
                 grid-template-columns: 1fr;
@@ -356,14 +360,14 @@ html
 <body>
     <div class="container">
         <header>
-            <h1>Advanced Video Identity Changer</h1>
-            <div class="subtitle">Automatically modify videos to change their identity (supports up to 10GB files)</div>
+            <h1>Advanced Video Editor</h1>
+            <div class="subtitle">Automatic Background Removal & Audio Replacement</div>
         </header>
         
         <div class="upload-section">
             <h2 class="section-title">
                 <i class="fas fa-cloud-upload-alt"></i>
-                Upload Video and Logo
+                Upload Video and Audio
             </h2>
             
             <div class="upload-area" id="video-upload-area">
@@ -377,30 +381,51 @@ html
                 <div class="file-info" id="video-info"></div>
             </div>
             
-            <div class="upload-area" id="logo-upload-area">
+            <div class="upload-area" id="audio-upload-area">
                 <div class="upload-icon">
-                    <i class="fas fa-image"></i>
+                    <i class="fas fa-music"></i>
                 </div>
-                <h3>Drop new logo file here</h3>
-                <p>PNG, JPG, SVG (transparent background recommended)</p>
-                <input type="file" id="logo-input" class="file-input" accept="image/*">
-                <div class="btn">Select Logo File</div>
-                <div class="file-info" id="logo-info"></div>
+                <h3>Drop new audio file here</h3>
+                <p>MP3, WAV, AAC (optional)</p>
+                <input type="file" id="audio-input" class="file-input" accept="audio/*">
+                <div class="btn">Select Audio File</div>
+                <div class="file-info" id="audio-info"></div>
             </div>
             
-            <div class="watermark-detection">
-                <h3><i class="fas fa-search"></i> Automatic Watermark Detection</h3>
-                <p>Our system will automatically detect and remove existing watermarks/logos</p>
-                <button class="btn btn-warning" id="detect-btn">
-                    <i class="fas fa-search"></i> Detect Watermarks
-                </button>
+            <div class="bg-options">
+                <h3><i class="fas fa-image"></i> Background Options</h3>
+                <div class="form-group">
+                    <label for="bg-mode">Background Mode</label>
+                    <select id="bg-mode">
+                        <option value="remove">Remove Background (Transparent)</option>
+                        <option value="blur">Blur Background</option>
+                        <option value="color">Solid Color Background</option>
+                        <option value="image">Image Background</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="bg-color-group" style="display: none;">
+                    <label for="bg-color">Background Color</label>
+                    <input type="color" id="bg-color" value="#ffffff">
+                </div>
+                
+                <div class="form-group" id="bg-image-group" style="display: none;">
+                    <label for="bg-image">Background Image</label>
+                    <input type="file" id="bg-image" accept="image/*">
+                </div>
+                
+                <div class="form-group">
+                    <label for="bg-blur">Blur Amount</label>
+                    <input type="range" id="bg-blur" min="1" max="20" value="5" disabled>
+                    <span class="range-value" id="blur-value">5</span>
+                </div>
             </div>
         </div>
         
         <div class="settings-panel">
             <h2 class="section-title">
                 <i class="fas fa-sliders-h"></i>
-                Processing Settings
+                Advanced Processing Settings
             </h2>
             
             <div class="settings-grid">
@@ -410,7 +435,7 @@ html
                         <label for="audio-mode">Audio Mode</label>
                         <select id="audio-mode">
                             <option value="remove">Remove original audio</option>
-                            <option value="modify">Modify audio (change pitch/speed)</option>
+                            <option value="modify">Modify original audio</option>
                             <option value="replace">Replace with new audio</option>
                             <option value="keep" selected>Keep original audio</option>
                         </select>
@@ -422,150 +447,75 @@ html
                         <span class="range-value" id="pitch-value">100%</span>
                     </div>
                     
-                    <div class="form-group" id="audio-replace-group" style="display: none;">
-                        <label for="new-audio">New Audio File</label>
-                        <input type="file" id="new-audio" accept="audio/*">
+                    <div class="form-group" id="audio-speed-group" style="display: none;">
+                        <label for="audio-speed">Speed Change (%)</label>
+                        <input type="range" id="audio-speed" min="50" max="200" value="100">
+                        <span class="range-value" id="speed-value">100%</span>
                     </div>
                 </div>
                 
                 <div class="setting-group">
-                    <h3>Visual Processing</h3>
+                    <h3>Video Quality</h3>
                     <div class="form-group">
-                        <label for="color-filter">Color Filter</label>
-                        <select id="color-filter">
-                            <option value="none">No filter</option>
-                            <option value="grayscale">Grayscale</option>
-                            <option value="sepia">Sepia</option>
-                            <option value="vintage">Vintage</option>
-                            <option value="cool">Cool tone</option>
-                            <option value="warm">Warm tone</option>
+                        <label for="resolution">Resolution</label>
+                        <select id="resolution">
+                            <option value="original">Original Resolution</option>
+                            <option value="1080">1080p (Full HD)</option>
+                            <option value="720">720p (HD)</option>
+                            <option value="480">480p (SD)</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
-                        <label for="brightness">Brightness</label>
-                        <input type="range" id="brightness" min="80" max="120" value="100">
-                        <span class="range-value" id="brightness-value">100%</span>
+                        <label for="bitrate">Bitrate (Mbps)</label>
+                        <input type="range" id="bitrate" min="1" max="50" value="10">
+                        <span class="range-value" id="bitrate-value">10</span>
                     </div>
                     
                     <div class="form-group">
-                        <label for="contrast">Contrast</label>
-                        <input type="range" id="contrast" min="80" max="120" value="100">
-                        <span class="range-value" id="contrast-value">100%</span>
+                        <label for="fps">Frame Rate (FPS)</label>
+                        <select id="fps">
+                            <option value="original">Original FPS</option>
+                            <option value="60">60 FPS</option>
+                            <option value="30">30 FPS</option>
+                            <option value="24">24 FPS</option>
+                        </select>
                     </div>
                 </div>
                 
                 <div class="setting-group">
-                    <h3>Logo Settings</h3>
+                    <h3>Cropping & Scaling</h3>
                     <div class="form-group">
-                        <label for="logo-action">Logo Action</label>
-                        <select id="logo-action">
-                            <option value="remove">Remove original logo</option>
-                            <option value="replace">Add new logo</option>
-                            <option value="both">Remove original and add new logo</option>
+                        <label for="crop-mode">Crop Mode</label>
+                        <select id="crop-mode">
+                            <option value="none">No cropping</option>
+                            <option value="16:9">16:9 (Widescreen)</option>
+                            <option value="4:3">4:3 (Standard)</option>
+                            <option value="1:1">1:1 (Square)</option>
+                            <option value="9:16">9:16 (Vertical)</option>
+                            <option value="custom">Custom</option>
                         </select>
                     </div>
                     
-                    <div class="form-group" id="logo-position-group">
-                        <label for="logo-position">Logo Position</label>
-                        <select id="logo-position">
-                            <option value="bottom-right">Bottom Right</option>
-                            <option value="bottom-left">Bottom Left</option>
-                            <option value="top-right">Top Right</option>
-                            <option value="top-left">Top Left</option>
-                            <option value="center">Center</option>
+                    <div class="form-group" id="custom-crop-group" style="display: none;">
+                        <label for="custom-crop">Custom Crop (px)</label>
+                        <input type="text" id="custom-crop" placeholder="width:height:x:y">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="scale-mode">Scale Mode</label>
+                        <select id="scale-mode">
+                            <option value="none">No scaling</option>
+                            <option value="fit">Fit to frame</option>
+                            <option value="fill">Fill frame</option>
+                            <option value="stretch">Stretch to fill</option>
                         </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="logo-size">Logo Size</label>
-                        <input type="range" id="logo-size" min="5" max="30" value="15">
-                        <span class="range-value" id="logo-size-value">15%</span>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="logo-opacity">Logo Opacity</label>
-                        <input type="range" id="logo-opacity" min="10" max="100" value="80">
-                        <span class="range-value" id="opacity-value">80%</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="advanced-toggle" id="advanced-toggle">
-                <i class="fas fa-cogs"></i>
-                <span>Advanced Settings</span>
-                <i class="fas fa-chevron-down"></i>
-            </div>
-            
-            <div class="advanced-settings" id="advanced-settings">
-                <div class="settings-grid">
-                    <div class="setting-group">
-                        <h3>Video Quality</h3>
-                        <div class="form-group">
-                            <label for="resolution">Resolution</label>
-                            <select id="resolution">
-                                <option value="original">Original Resolution</option>
-                                <option value="1080">1080p (Full HD)</option>
-                                <option value="720">720p (HD)</option>
-                                <option value="480">480p (SD)</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="bitrate">Bitrate (Mbps)</label>
-                            <input type="range" id="bitrate" min="1" max="50" value="10">
-                            <span class="range-value" id="bitrate-value">10</span>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-group">
-                        <h3>Frame Rate</h3>
-                        <div class="form-group">
-                            <label for="fps">FPS</label>
-                            <select id="fps">
-                                <option value="original">Original FPS</option>
-                                <option value="60">60 FPS</option>
-                                <option value="30">30 FPS</option>
-                                <option value="24">24 FPS</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="speed">Playback Speed</label>
-                            <select id="speed">
-                                <option value="1.0">1.0x (Normal)</option>
-                                <option value="1.25">1.25x</option>
-                                <option value="1.5">1.5x</option>
-                                <option value="0.75">0.75x</option>
-                                <option value="0.5">0.5x</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-group">
-                        <h3>Cropping</h3>
-                        <div class="form-group">
-                            <label for="crop-mode">Crop Mode</label>
-                            <select id="crop-mode">
-                                <option value="none">Don't crop</option>
-                                <option value="16:9">16:9 (Widescreen)</option>
-                                <option value="4:3">4:3 (Standard)</option>
-                                <option value="1:1">1:1 (Square)</option>
-                                <option value="9:16">9:16 (Vertical)</option>
-                                <option value="custom">Custom</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group" id="custom-crop-group" style="display: none;">
-                            <label for="custom-crop">Custom Crop (px)</label>
-                            <input type="text" id="custom-crop" placeholder="width:height:x:y">
-                        </div>
                     </div>
                 </div>
             </div>
             
             <button class="btn btn-success btn-block" id="process-btn">
-                <i class="fas fa-magic"></i> Process Video Automatically
+                <i class="fas fa-magic"></i> Process Video with Auto Background Removal
             </button>
             
             <div class="progress-container" id="progress-container">
@@ -618,9 +568,9 @@ html
         const videoInput = document.getElementById('video-input');
         const videoInfo = document.getElementById('video-info');
         
-        const logoUploadArea = document.getElementById('logo-upload-area');
-        const logoInput = document.getElementById('logo-input');
-        const logoInfo = document.getElementById('logo-info');
+        const audioUploadArea = document.getElementById('audio-upload-area');
+        const audioInput = document.getElementById('audio-input');
+        const audioInfo = document.getElementById('audio-info');
         
         const processBtn = document.getElementById('process-btn');
         const progressContainer = document.getElementById('progress-container');
@@ -637,22 +587,27 @@ html
         const newEditBtn = document.getElementById('new-edit-btn');
         const cancelBtn = document.getElementById('cancel-btn');
         
-        const advancedToggle = document.getElementById('advanced-toggle');
-        const advancedSettings = document.getElementById('advanced-settings');
+        // Background removal elements
+        const bgMode = document.getElementById('bg-mode');
+        const bgColorGroup = document.getElementById('bg-color-group');
+        const bgImageGroup = document.getElementById('bg-image-group');
+        const bgColor = document.getElementById('bg-color');
+        const bgImage = document.getElementById('bg-image');
+        const bgBlur = document.getElementById('bg-blur');
+        const blurValue = document.getElementById('blur-value');
         
-        // Settings elements
+        // Audio processing elements
         const audioMode = document.getElementById('audio-mode');
         const audioModifyGroup = document.getElementById('audio-modify-group');
-        const audioReplaceGroup = document.getElementById('audio-replace-group');
-        const newAudioInput = document.getElementById('new-audio');
+        const audioSpeedGroup = document.getElementById('audio-speed-group');
         
         // Range inputs
         const rangeInputs = document.querySelectorAll('input[type="range"]');
         
         // Variables
         let originalVideoFile = null;
-        let originalLogoFile = null;
         let newAudioFile = null;
+        let backgroundImageFile = null;
         let editedVideoBlob = null;
         let ffmpeg = null;
         let processing = false;
@@ -681,8 +636,8 @@ html
         
         // Event Listeners
         videoInput.addEventListener('change', handleVideoUpload);
-        logoInput.addEventListener('change', handleLogoUpload);
-        newAudioInput.addEventListener('change', handleNewAudioUpload);
+        audioInput.addEventListener('change', handleAudioUpload);
+        bgImage.addEventListener('change', handleBackgroundImageUpload);
         
         // Drag and drop for video
         videoUploadArea.addEventListener('dragover', (e) => {
@@ -703,52 +658,59 @@ html
             }
         });
         
-        // Drag and drop for logo
-        logoUploadArea.addEventListener('dragover', (e) => {
+        // Drag and drop for audio
+        audioUploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
-            logoUploadArea.style.backgroundColor = 'rgba(106, 17, 203, 0.2)';
+            audioUploadArea.style.backgroundColor = 'rgba(106, 17, 203, 0.2)';
         });
         
-        logoUploadArea.addEventListener('dragleave', () => {
-            logoUploadArea.style.backgroundColor = 'rgba(106, 17, 203, 0.05)';
+        audioUploadArea.addEventListener('dragleave', () => {
+            audioUploadArea.style.backgroundColor = 'rgba(106, 17, 203, 0.05)';
         });
         
-        logoUploadArea.addEventListener('drop', (e) => {
+        audioUploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
-            logoUploadArea.style.backgroundColor = 'rgba(106, 17, 203, 0.05)';
+            audioUploadArea.style.backgroundColor = 'rgba(106, 17, 203, 0.05)';
             if (e.dataTransfer.files.length) {
-                logoInput.files = e.dataTransfer.files;
-                handleLogoUpload();
+                audioInput.files = e.dataTransfer.files;
+                handleAudioUpload();
+            }
+        });
+        
+        // Background mode change
+        bgMode.addEventListener('change', () => {
+            bgColorGroup.style.display = 'none';
+            bgImageGroup.style.display = 'none';
+            bgBlur.disabled = true;
+            
+            if (bgMode.value === 'color') {
+                bgColorGroup.style.display = 'block';
+            } else if (bgMode.value === 'image') {
+                bgImageGroup.style.display = 'block';
+            } else if (bgMode.value === 'blur') {
+                bgBlur.disabled = false;
             }
         });
         
         // Audio mode change
         audioMode.addEventListener('change', () => {
             audioModifyGroup.style.display = 'none';
-            audioReplaceGroup.style.display = 'none';
+            audioSpeedGroup.style.display = 'none';
             
             if (audioMode.value === 'modify') {
                 audioModifyGroup.style.display = 'block';
-            } else if (audioMode.value === 'replace') {
-                audioReplaceGroup.style.display = 'block';
+                audioSpeedGroup.style.display = 'block';
             }
         });
         
         // Range inputs
         rangeInputs.forEach(input => {
             const valueElement = document.getElementById(`${input.id}-value`);
-            valueElement.textContent = input.value + (input.id === 'bitrate' ? '' : '%');
+            valueElement.textContent = input.value;
             
             input.addEventListener('input', () => {
-                valueElement.textContent = input.value + (input.id === 'bitrate' ? '' : '%');
+                valueElement.textContent = input.value;
             });
-        });
-        
-        // Advanced toggle
-        advancedToggle.addEventListener('click', () => {
-            advancedSettings.style.display = advancedSettings.style.display === 'block' ? 'none' : 'block';
-            const icon = advancedToggle.querySelector('.fa-chevron-down');
-            icon.classList.toggle('fa-chevron-up');
         });
         
         // Process button
@@ -804,26 +766,26 @@ html
             }
         }
         
-        function handleLogoUpload() {
-            if (logoInput.files.length) {
-                originalLogoFile = logoInput.files[0];
+        function handleAudioUpload() {
+            if (audioInput.files.length) {
+                newAudioFile = audioInput.files[0];
                 
                 // Display file info
-                logoInfo.innerHTML = `
-                    <strong>${originalLogoFile.name}</strong><br>
-                    Size: ${formatFileSize(originalLogoFile.size)}<br>
-                    Type: ${originalLogoFile.type || 'N/A'}
+                audioInfo.innerHTML = `
+                    <strong>${newAudioFile.name}</strong><br>
+                    Size: ${formatFileSize(newAudioFile.size)}<br>
+                    Type: ${newAudioFile.type || 'N/A'}
                 `;
-                logoInfo.style.display = 'block';
+                audioInfo.style.display = 'block';
                 
-                showStatus('Logo uploaded successfully!', 'success');
+                showStatus('Audio file uploaded successfully!', 'success');
             }
         }
         
-        function handleNewAudioUpload() {
-            if (newAudioInput.files.length) {
-                newAudioFile = newAudioInput.files[0];
-                showStatus('New audio file selected', 'success');
+        function handleBackgroundImageUpload() {
+            if (bgImage.files.length) {
+                backgroundImageFile = bgImage.files[0];
+                showStatus('Background image selected', 'success');
             }
         }
         
@@ -874,71 +836,57 @@ html
                 updateProgress(5, 'Preparing files...');
                 await ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(originalVideoFile));
                 
-                if (originalLogoFile) {
-                    await ffmpeg.FS('writeFile', 'logo.png', await fetchFile(originalLogoFile));
-                }
-                
-                if (audioMode.value === 'replace' && newAudioFile) {
+                if (newAudioFile) {
                     await ffmpeg.FS('writeFile', 'new_audio.mp3', await fetchFile(newAudioFile));
                 }
                 
-                // Step 2: Build FFmpeg command
-                updateProgress(10, 'Preparing command...');
-                let command = ['-i', 'input.mp4'];
-                let filters = [];
-                
-                // Watermark removal (simulated - in real app use proper detection)
-                filters.push('delogo=x=10:y=10:w=100:h=50');
-                
-                // Color filters
-                const colorFilter = document.getElementById('color-filter').value;
-                if (colorFilter !== 'none') {
-                    if (colorFilter === 'grayscale') {
-                        filters.push('hue=s=0');
-                    } else if (colorFilter === 'sepia') {
-                        filters.push('colorchannelmixer=.393:.769:.189:.349:.686:.168:.272:.534:.131');
-                    } else if (colorFilter === 'vintage') {
-                        filters.push('curves=vintage');
-                    } else if (colorFilter === 'cool') {
-                        filters.push('colorbalance=rs=-0.1:gs=0.1:bs=0.3');
-                    } else if (colorFilter === 'warm') {
-                        filters.push('colorbalance=rs=0.3:gs=0.1:bs=-0.1');
-                    }
+                if (backgroundImageFile) {
+                    await ffmpeg.FS('writeFile', 'background.png', await fetchFile(backgroundImageFile));
                 }
                 
-                // Brightness/Contrast
-                const brightness = document.getElementById('brightness').value / 100;
-                const contrast = document.getElementById('contrast').value / 100;
-                if (brightness !== 1 || contrast !== 1) {
-                    filters.push(`eq=brightness=${brightness-1}:contrast=${contrast}`);
+                // Step 2: Build FFmpeg command for background removal
+                updateProgress(10, 'Removing background...');
+                
+                // This is a simplified version - in a real app you would use:
+                // 1. A proper background removal AI model
+                // 2. More sophisticated chroma key or segmentation techniques
+                let command = ['-i', 'input.mp4'];
+                
+                // Background removal (simplified chroma key example)
+                let filters = [];
+                
+                if (bgMode.value === 'remove') {
+                    // Create transparent background
+                    filters.push('chromakey=color=green:similarity=0.1:blend=0.1');
+                    command.push('-c:v', 'libvpx-vp9', '-auto-alt-ref', '0', '-pix_fmt', 'yuva420p');
+                } 
+                else if (bgMode.value === 'blur') {
+                    // Blur background
+                    const blurAmount = document.getElementById('bg-blur').value;
+                    filters.push(`split[original][blurred];[blurred]boxblur=${blurAmount}[bg];[original][bg]overlay`);
+                }
+                else if (bgMode.value === 'color') {
+                    // Solid color background
+                    const color = bgColor.value.substring(1); // Remove # from hex color
+                    filters.push(`color=c=${color}:s=1280x720[bg];[0:v]scale=1280:-1[fg];[bg][fg]overlay`);
+                }
+                else if (bgMode.value === 'image' && backgroundImageFile) {
+                    // Image background
+                    filters.push(`[1:v]scale=1280:720[bg];[0:v]scale=1280:-1[fg];[bg][fg]overlay`);
+                    command.push('-i', 'background.png');
                 }
                 
                 // Audio processing
                 if (audioMode.value === 'remove') {
                     command.push('-an');
-                } else if (audioMode.value === 'modify') {
+                } 
+                else if (audioMode.value === 'modify') {
                     const pitch = document.getElementById('audio-pitch').value;
-                    command.push('-af', `asetrate=44100*${pitch/100},aresample=44100,atempo=${100/pitch}`);
-                } else if (audioMode.value === 'replace' && newAudioFile) {
+                    const speed = document.getElementById('audio-speed').value;
+                    command.push('-af', `asetrate=44100*${pitch/100},aresample=44100,atempo=${speed/100}`);
+                } 
+                else if (audioMode.value === 'replace' && newAudioFile) {
                     command.push('-i', 'new_audio.mp3', '-map', '0:v', '-map', '1:a', '-shortest');
-                }
-                
-                // Add logo if needed
-                const logoAction = document.getElementById('logo-action').value;
-                if ((logoAction === 'replace' || logoAction === 'both') && originalLogoFile) {
-                    const position = document.getElementById('logo-position').value;
-                    const size = document.getElementById('logo-size').value;
-                    const opacity = document.getElementById('logo-opacity').value / 100;
-                    
-                    let overlay = '';
-                    if (position === 'bottom-right') overlay = 'overlay=W-w-10:H-h-10';
-                    else if (position === 'bottom-left') overlay = 'overlay=10:H-h-10';
-                    else if (position === 'top-right') overlay = 'overlay=W-w-10:10';
-                    else if (position === 'top-left') overlay = 'overlay=10:10';
-                    else if (position === 'center') overlay = 'overlay=(W-w)/2:(H-h)/2';
-                    
-                    filters.push(`[1:v]scale=iw*${size/100}:-1,format=rgba,colorchannelmixer=aa=${opacity}[logo]`);
-                    filters.push(`[0:v][logo]${overlay}`);
                 }
                 
                 // Add filters to command if any
@@ -976,8 +924,8 @@ html
                 
                 // Step 5: Clean up
                 ffmpeg.FS('unlink', 'input.mp4');
-                if (originalLogoFile) ffmpeg.FS('unlink', 'logo.png');
                 if (newAudioFile) ffmpeg.FS('unlink', 'new_audio.mp3');
+                if (backgroundImageFile) ffmpeg.FS('unlink', 'background.png');
                 ffmpeg.FS('unlink', 'output.mp4');
                 
                 // Complete
@@ -988,12 +936,17 @@ html
                 const videoURL = URL.createObjectURL(editedVideoBlob);
                 editedVideoElement.src = videoURL;
                 
-                               // Show preview section
+                // Show preview section
                 previewSection.style.display = 'block';
                 
+                // Scroll to preview
+                setTimeout(() => {
+                    previewSection.scrollIntoView({ behavior: 'smooth' });
+                }, 500);
+                
             } catch (error) {
-                showStatus(`Error processing video: ${error.message}`, 'error');
-                console.error(error);
+                showStatus(`Error during processing: ${error.message}`, 'error');
+                console.error('Processing error:', error);
             } finally {
                 processing = false;
                 processBtn.disabled = false;
@@ -1003,77 +956,65 @@ html
         
         function downloadEditedVideo() {
             if (!editedVideoBlob) {
-                showStatus('No edited video available to download', 'error');
+                showStatus('Please process a video first', 'error');
                 return;
             }
             
-            const url = URL.createObjectURL(editedVideoBlob);
             const a = document.createElement('a');
+            const url = URL.createObjectURL(editedVideoBlob);
             a.href = url;
-            a.download = `edited_${originalVideoFile.name.replace(/\.[^/.]+$/, '')}.mp4`;
+            a.download = `edited-video-${Date.now()}.mp4`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            
-            showStatus('Download started!', 'success');
         }
         
         function resetTool() {
             // Reset file inputs
             videoInput.value = '';
-            logoInput.value = '';
-            newAudioInput.value = '';
+            audioInput.value = '';
+            bgImage.value = '';
+            originalVideoFile = null;
+            newAudioFile = null;
+            backgroundImageFile = null;
+            editedVideoBlob = null;
             
-            // Reset file info displays
+            // Reset UI
             videoInfo.style.display = 'none';
-            logoInfo.style.display = 'none';
+            videoInfo.innerHTML = '';
+            audioInfo.style.display = 'none';
+            audioInfo.innerHTML = '';
             
-            // Reset video elements
+            // Reset videos
             originalVideoElement.src = '';
             editedVideoElement.src = '';
             
-            // Reset variables
-            originalVideoFile = null;
-            originalLogoFile = null;
-            newAudioFile = null;
-            editedVideoBlob = null;
+            // Hide sections
+            progressContainer.style.display = 'none';
+            previewSection.style.display = 'none';
             
             // Reset progress
-            progressContainer.style.display = 'none';
             progressBar.style.width = '0%';
             progressPercent.textContent = '0%';
             progressStatus.textContent = 'Starting processing...';
-            
-            // Hide preview section
-            previewSection.style.display = 'none';
-            
-            // Reset status message
             statusMessage.style.display = 'none';
             
-            showStatus('Tool reset successfully. You can start a new edit.', 'success');
+            // Reset settings
+            bgMode.value = 'remove';
+            bgColorGroup.style.display = 'none';
+            bgImageGroup.style.display = 'none';
+            bgBlur.disabled = true;
+            bgBlur.value = '5';
+            blurValue.textContent = '5';
+            
+            audioMode.value = 'keep';
+            audioModifyGroup.style.display = 'none';
+            audioSpeedGroup.style.display = 'none';
+            
+            // Re-enable process button
+            processBtn.disabled = false;
         }
-
-        // Crop mode change
-        document.getElementById('crop-mode').addEventListener('change', function() {
-            const customCropGroup = document.getElementById('custom-crop-group');
-            customCropGroup.style.display = this.value === 'custom' ? 'block' : 'none';
-        });
-
-        // Detect watermarks button
-        document.getElementById('detect-btn').addEventListener('click', function() {
-            if (!originalVideoFile) {
-                showStatus('Please upload a video first', 'error');
-                return;
-            }
-            
-            showStatus('Detecting watermarks... This may take a moment', 'processing');
-            
-            // Simulate watermark detection (in a real app, this would use actual detection)
-            setTimeout(() => {
-                showStatus('Watermark detection complete! Found 1 watermark in the video.', 'success');
-            }, 2000);
-        });
     </script>
 </body>
 </html>
