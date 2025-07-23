@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Video Editor - Auto Background Removal</title>
+    <title>Advanced Video Editor</title>
     <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         :root {
             --primary: #6a11cb;
@@ -282,7 +283,7 @@
             font-weight: 600;
         }
         
-        select, input[type="range"], input[type="number"], input[type="text"] {
+        select, input[type="range"], input[type="number"], input[type="text"], input[type="color"] {
             width: 100%;
             padding: 0.75rem;
             border: 1px solid #ddd;
@@ -307,38 +308,37 @@
             margin-left: 10px;
         }
         
-        .watermark-detection {
-            background: rgba(251, 176, 64, 0.1);
-            padding: 1rem;
-            border-radius: 5px;
-            margin-top: 1rem;
-            border-left: 4px solid var(--warning);
-        }
-        
-        .advanced-toggle {
-            color: var(--primary);
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            margin-bottom: 1rem;
-            font-weight: 600;
-        }
-        
-        .advanced-settings {
-            display: none;
-            padding: 1rem;
-            background: var(--light);
-            border-radius: 5px;
-            margin-top: 1rem;
-        }
-        
-        .bg-options {
-            background: rgba(67, 97, 238, 0.1);
-            padding: 1rem;
-            border-radius: 5px;
-            margin-top: 1rem;
+        .preset-section {
+            background: rgba(106, 17, 203, 0.05);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
             border-left: 4px solid var(--primary);
+        }
+        
+        .preset-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+        
+        .preset-btn {
+            padding: 0.5rem 1rem;
+            background: rgba(106, 17, 203, 0.1);
+            border: 1px solid rgba(106, 17, 203, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .preset-btn:hover {
+            background: rgba(106, 17, 203, 0.2);
+        }
+        
+        .preset-btn.active {
+            background: var(--primary);
+            color: white;
         }
         
         @media (max-width: 768px) {
@@ -353,15 +353,18 @@
             .action-buttons {
                 flex-direction: column;
             }
+            
+            .preset-buttons {
+                flex-direction: column;
+            }
         }
     </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <div class="container">
         <header>
             <h1>Advanced Video Editor</h1>
-            <div class="subtitle">Automatic Background Removal & Audio Replacement</div>
+            <div class="subtitle">Professional Video Editing in Your Browser</div>
         </header>
         
         <div class="upload-section">
@@ -375,7 +378,7 @@
                     <i class="fas fa-video"></i>
                 </div>
                 <h3>Drop video file here</h3>
-                <p>MP4, MOV, AVI, MKV (up to 10GB)</p>
+                <p>MP4, MOV, AVI, MKV (up to 500MB)</p>
                 <input type="file" id="video-input" class="file-input" accept="video/*">
                 <div class="btn">Select Video File</div>
                 <div class="file-info" id="video-info"></div>
@@ -391,66 +394,73 @@
                 <div class="btn">Select Audio File</div>
                 <div class="file-info" id="audio-info"></div>
             </div>
-            
-            <div class="bg-options">
-                <h3><i class="fas fa-image"></i> Background Options</h3>
-                <div class="form-group">
-                    <label for="bg-mode">Background Mode</label>
-                    <select id="bg-mode">
-                        <option value="remove">Remove Background (Transparent)</option>
-                        <option value="blur">Blur Background</option>
-                        <option value="color">Solid Color Background</option>
-                        <option value="image">Image Background</option>
-                    </select>
-                </div>
-                
-                <div class="form-group" id="bg-color-group" style="display: none;">
-                    <label for="bg-color">Background Color</label>
-                    <input type="color" id="bg-color" value="#ffffff">
-                </div>
-                
-                <div class="form-group" id="bg-image-group" style="display: none;">
-                    <label for="bg-image">Background Image</label>
-                    <input type="file" id="bg-image" accept="image/*">
-                </div>
-                
-                <div class="form-group">
-                    <label for="bg-blur">Blur Amount</label>
-                    <input type="range" id="bg-blur" min="1" max="20" value="5" disabled>
-                    <span class="range-value" id="blur-value">5</span>
-                </div>
-            </div>
         </div>
         
         <div class="settings-panel">
             <h2 class="section-title">
                 <i class="fas fa-sliders-h"></i>
-                Advanced Processing Settings
+                Editing Settings
             </h2>
+            
+            <div class="preset-section">
+                <h3>Quick Presets</h3>
+                <p>Select a preset to apply common editing settings</p>
+                <div class="preset-buttons">
+                    <button class="preset-btn" data-preset="social-media">Social Media</button>
+                    <button class="preset-btn" data-preset="presentation">Presentation</button>
+                    <button class="preset-btn" data-preset="podcast">Podcast</button>
+                    <button class="preset-btn" data-preset="green-screen">Green Screen</button>
+                    <button class="preset-btn" data-preset="blur-background">Blur Background</button>
+                </div>
+            </div>
             
             <div class="settings-grid">
                 <div class="setting-group">
-                    <h3>Audio Processing</h3>
+                    <h3>Background Options</h3>
                     <div class="form-group">
-                        <label for="audio-mode">Audio Mode</label>
-                        <select id="audio-mode">
-                            <option value="remove">Remove original audio</option>
-                            <option value="modify">Modify original audio</option>
-                            <option value="replace">Replace with new audio</option>
-                            <option value="keep" selected>Keep original audio</option>
+                        <label for="bg-mode">Background Mode</label>
+                        <select id="bg-mode">
+                            <option value="keep">Keep Original</option>
+                            <option value="remove">Remove Background</option>
+                            <option value="blur">Blur Background</option>
+                            <option value="color">Solid Color</option>
+                            <option value="image">Image Background</option>
                         </select>
                     </div>
                     
-                    <div class="form-group" id="audio-modify-group" style="display: none;">
-                        <label for="audio-pitch">Pitch Change (%)</label>
-                        <input type="range" id="audio-pitch" min="80" max="120" value="100">
-                        <span class="range-value" id="pitch-value">100%</span>
+                    <div class="form-group" id="bg-color-group" style="display: none;">
+                        <label for="bg-color">Background Color</label>
+                        <input type="color" id="bg-color" value="#ffffff">
                     </div>
                     
-                    <div class="form-group" id="audio-speed-group" style="display: none;">
-                        <label for="audio-speed">Speed Change (%)</label>
-                        <input type="range" id="audio-speed" min="50" max="200" value="100">
-                        <span class="range-value" id="speed-value">100%</span>
+                    <div class="form-group" id="bg-image-group" style="display: none;">
+                        <label for="bg-image">Background Image</label>
+                        <input type="file" id="bg-image" accept="image/*">
+                    </div>
+                    
+                    <div class="form-group" id="bg-blur-group" style="display: none;">
+                        <label for="bg-blur">Blur Amount</label>
+                        <input type="range" id="bg-blur" min="1" max="20" value="5">
+                        <span class="range-value" id="blur-value">5</span>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <h3>Audio Settings</h3>
+                    <div class="form-group">
+                        <label for="audio-mode">Audio Mode</label>
+                        <select id="audio-mode">
+                            <option value="keep">Keep Original</option>
+                            <option value="remove">Remove Audio</option>
+                            <option value="replace">Replace Audio</option>
+                            <option value="enhance">Enhance Audio</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="audio-volume-group">
+                        <label for="audio-volume">Volume (%)</label>
+                        <input type="range" id="audio-volume" min="0" max="200" value="100">
+                        <span class="range-value" id="volume-value">100</span>
                     </div>
                 </div>
                 
@@ -459,7 +469,7 @@
                     <div class="form-group">
                         <label for="resolution">Resolution</label>
                         <select id="resolution">
-                            <option value="original">Original Resolution</option>
+                            <option value="original">Original</option>
                             <option value="1080">1080p (Full HD)</option>
                             <option value="720">720p (HD)</option>
                             <option value="480">480p (SD)</option>
@@ -467,55 +477,19 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="bitrate">Bitrate (Mbps)</label>
-                        <input type="range" id="bitrate" min="1" max="50" value="10">
-                        <span class="range-value" id="bitrate-value">10</span>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="fps">Frame Rate (FPS)</label>
+                        <label for="fps">Frame Rate</label>
                         <select id="fps">
-                            <option value="original">Original FPS</option>
+                            <option value="original">Original</option>
                             <option value="60">60 FPS</option>
                             <option value="30">30 FPS</option>
-                            <option value="24">24 FPS</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="setting-group">
-                    <h3>Cropping & Scaling</h3>
-                    <div class="form-group">
-                        <label for="crop-mode">Crop Mode</label>
-                        <select id="crop-mode">
-                            <option value="none">No cropping</option>
-                            <option value="16:9">16:9 (Widescreen)</option>
-                            <option value="4:3">4:3 (Standard)</option>
-                            <option value="1:1">1:1 (Square)</option>
-                            <option value="9:16">9:16 (Vertical)</option>
-                            <option value="custom">Custom</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group" id="custom-crop-group" style="display: none;">
-                        <label for="custom-crop">Custom Crop (px)</label>
-                        <input type="text" id="custom-crop" placeholder="width:height:x:y">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="scale-mode">Scale Mode</label>
-                        <select id="scale-mode">
-                            <option value="none">No scaling</option>
-                            <option value="fit">Fit to frame</option>
-                            <option value="fill">Fill frame</option>
-                            <option value="stretch">Stretch to fill</option>
+                            <option value="24">24 FPS (Cinematic)</option>
                         </select>
                     </div>
                 </div>
             </div>
             
             <button class="btn btn-success btn-block" id="process-btn">
-                <i class="fas fa-magic"></i> Process Video with Auto Background Removal
+                <i class="fas fa-magic"></i> Process Video
             </button>
             
             <div class="progress-container" id="progress-container">
@@ -534,7 +508,7 @@
         <div class="preview-section" id="preview-section">
             <h2 class="section-title">
                 <i class="fas fa-play-circle"></i>
-                Edited Video Preview
+                Video Preview
             </h2>
             
             <div class="video-container">
@@ -550,375 +524,316 @@
             
             <div class="action-buttons">
                 <button class="btn btn-success" id="download-btn">
-                    <i class="fas fa-download"></i> Download Edited Video
+                    <i class="fas fa-download"></i> Download Video
                 </button>
                 <button class="btn" id="new-edit-btn">
                     <i class="fas fa-redo"></i> Start New Edit
-                </button>
-                <button class="btn btn-danger" id="cancel-btn" style="display: none;">
-                    <i class="fas fa-times"></i> Cancel Processing
                 </button>
             </div>
         </div>
     </div>
 
     <script>
+        // Initialize FFmpeg
+        const { createFFmpeg, fetchFile } = FFmpeg;
+        const ffmpeg = createFFmpeg({ 
+            log: true,
+            corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js'
+        });
+
         // DOM Elements
-        const videoUploadArea = document.getElementById('video-upload-area');
         const videoInput = document.getElementById('video-input');
-        const videoInfo = document.getElementById('video-info');
-        
-        const audioUploadArea = document.getElementById('audio-upload-area');
         const audioInput = document.getElementById('audio-input');
-        const audioInfo = document.getElementById('audio-info');
-        
+        const bgImageInput = document.getElementById('bg-image');
         const processBtn = document.getElementById('process-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const newEditBtn = document.getElementById('new-edit-btn');
+        const originalVideoElement = document.getElementById('original-video');
+        const editedVideoElement = document.getElementById('edited-video');
+        const previewSection = document.getElementById('preview-section');
         const progressContainer = document.getElementById('progress-container');
         const progressBar = document.getElementById('progress-bar');
         const progressStatus = document.getElementById('progress-status');
         const progressPercent = document.getElementById('progress-percent');
         const statusMessage = document.getElementById('status-message');
-        
-        const originalVideoElement = document.getElementById('original-video');
-        const editedVideoElement = document.getElementById('edited-video');
-        const previewSection = document.getElementById('preview-section');
-        
-        const downloadBtn = document.getElementById('download-btn');
-        const newEditBtn = document.getElementById('new-edit-btn');
-        const cancelBtn = document.getElementById('cancel-btn');
-        
-        // Background removal elements
+        const presetButtons = document.querySelectorAll('.preset-btn');
+
+        // Settings elements
         const bgMode = document.getElementById('bg-mode');
         const bgColorGroup = document.getElementById('bg-color-group');
         const bgImageGroup = document.getElementById('bg-image-group');
-        const bgColor = document.getElementById('bg-color');
-        const bgImage = document.getElementById('bg-image');
-        const bgBlur = document.getElementById('bg-blur');
-        const blurValue = document.getElementById('blur-value');
-        
-        // Audio processing elements
+        const bgBlurGroup = document.getElementById('bg-blur-group');
         const audioMode = document.getElementById('audio-mode');
-        const audioModifyGroup = document.getElementById('audio-modify-group');
-        const audioSpeedGroup = document.getElementById('audio-speed-group');
-        
-        // Range inputs
-        const rangeInputs = document.querySelectorAll('input[type="range"]');
-        
-        // Variables
+
+        // State variables
         let originalVideoFile = null;
         let newAudioFile = null;
         let backgroundImageFile = null;
         let editedVideoBlob = null;
         let processing = false;
-        let cancelRequested = false;
-        
-        // Initialize FFmpeg
-        const { createFFmpeg, fetchFile } = FFmpeg;
-        const ffmpeg = createFFmpeg({ 
-            log: true,
-            corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
-            progress: ({ ratio }) => {
-                // Convert ratio (0-1) to percentage (0-100)
-                const percent = Math.round(ratio * 100);
-                updateProgress(percent, getProcessingStep(percent));
-            }
-        });
-
-        // Get processing step message based on percentage
-        function getProcessingStep(percent) {
-            if (percent < 10) return "Initializing...";
-            if (percent < 30) return "Loading video...";
-            if (percent < 50) return "Analyzing frames...";
-            if (percent < 70) return "Removing background...";
-            if (percent < 90) return "Applying effects...";
-            return "Finalizing output...";
-        }
 
         // Event Listeners
         videoInput.addEventListener('change', handleVideoUpload);
         audioInput.addEventListener('change', handleAudioUpload);
-        bgImage.addEventListener('change', handleBackgroundImageUpload);
-        
-        // Drag and drop for video
-        videoUploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            videoUploadArea.style.backgroundColor = 'rgba(106, 17, 203, 0.2)';
-        });
-        
-        videoUploadArea.addEventListener('dragleave', () => {
-            videoUploadArea.style.backgroundColor = 'rgba(106, 17, 203, 0.05)';
-        });
-        
-        videoUploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            videoUploadArea.style.backgroundColor = 'rgba(106, 17, 203, 0.05)';
-            if (e.dataTransfer.files.length) {
-                videoInput.files = e.dataTransfer.files;
-                handleVideoUpload();
-            }
-        });
-        
-        // Drag and drop for audio
-        audioUploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            audioUploadArea.style.backgroundColor = 'rgba(106, 17, 203, 0.2)';
-        });
-        
-        audioUploadArea.addEventListener('dragleave', () => {
-            audioUploadArea.style.backgroundColor = 'rgba(106, 17, 203, 0.05)';
-        });
-        
-        audioUploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            audioUploadArea.style.backgroundColor = 'rgba(106, 17, 203, 0.05)';
-            if (e.dataTransfer.files.length) {
-                audioInput.files = e.dataTransfer.files;
-                handleAudioUpload();
-            }
-        });
-        
-        // Background mode change
-        bgMode.addEventListener('change', () => {
-            bgColorGroup.style.display = 'none';
-            bgImageGroup.style.display = 'none';
-            bgBlur.disabled = true;
-            
-            if (bgMode.value === 'color') {
-                bgColorGroup.style.display = 'block';
-            } else if (bgMode.value === 'image') {
-                bgImageGroup.style.display = 'block';
-            } else if (bgMode.value === 'blur') {
-                bgBlur.disabled = false;
-            }
-        });
-        
-        // Audio mode change
-        audioMode.addEventListener('change', () => {
-            audioModifyGroup.style.display = 'none';
-            audioSpeedGroup.style.display = 'none';
-            
-            if (audioMode.value === 'modify') {
-                audioModifyGroup.style.display = 'block';
-                audioSpeedGroup.style.display = 'block';
-            }
-        });
-        
-        // Range inputs
-        rangeInputs.forEach(input => {
-            const valueElement = document.getElementById(`${input.id}-value`);
-            valueElement.textContent = input.value;
-            
-            input.addEventListener('input', () => {
-                valueElement.textContent = input.value;
-            });
-        });
-        
-        // Process button
-        processBtn.addEventListener('click', async () => {
-            if (!originalVideoFile) {
-                showStatus('Please select a video file', 'error');
-                return;
-            }
-            
-            // Start processing
-            await processVideo();
-        });
-        
-        // Download button
+        bgImageInput.addEventListener('change', handleBackgroundImageUpload);
+        processBtn.addEventListener('click', processVideo);
         downloadBtn.addEventListener('click', downloadEditedVideo);
-        
-        // New edit button
         newEditBtn.addEventListener('click', resetTool);
-        
-        // Cancel button
-        cancelBtn.addEventListener('click', () => {
-            cancelRequested = true;
-            showStatus('Cancellation requested...', 'processing');
+        bgMode.addEventListener('change', updateBackgroundSettings);
+        presetButtons.forEach(btn => btn.addEventListener('click', applyPreset));
+
+        // Range inputs
+        document.getElementById('bg-blur').addEventListener('input', function() {
+            document.getElementById('blur-value').textContent = this.value;
         });
-        
+
+        document.getElementById('audio-volume').addEventListener('input', function() {
+            document.getElementById('volume-value').textContent = this.value;
+        });
+
         // Functions
         function handleVideoUpload() {
             if (videoInput.files.length) {
                 originalVideoFile = videoInput.files[0];
                 
-                if (originalVideoFile.size > 10 * 1024 * 1024 * 1024) {
-                    showStatus('Video file cannot exceed 10GB', 'error');
-                    return;
-                }
-                
                 // Display file info
-                videoInfo.innerHTML = `
+                document.getElementById('video-info').innerHTML = `
                     <strong>${originalVideoFile.name}</strong><br>
                     Size: ${formatFileSize(originalVideoFile.size)}<br>
                     Type: ${originalVideoFile.type || 'N/A'}
                 `;
-                videoInfo.style.display = 'block';
+                document.getElementById('video-info').style.display = 'block';
                 
                 // Create video preview
-                const videoURL = URL.createObjectURL(originalVideoFile);
-                originalVideoElement.src = videoURL;
+                originalVideoElement.src = URL.createObjectURL(originalVideoFile);
                 
                 showStatus('Video uploaded successfully!', 'success');
             }
         }
-        
+
         function handleAudioUpload() {
             if (audioInput.files.length) {
                 newAudioFile = audioInput.files[0];
                 
                 // Display file info
-                audioInfo.innerHTML = `
+                document.getElementById('audio-info').innerHTML = `
                     <strong>${newAudioFile.name}</strong><br>
                     Size: ${formatFileSize(newAudioFile.size)}<br>
                     Type: ${newAudioFile.type || 'N/A'}
                 `;
-                audioInfo.style.display = 'block';
+                document.getElementById('audio-info').style.display = 'block';
                 
                 showStatus('Audio file uploaded successfully!', 'success');
             }
         }
-        
+
         function handleBackgroundImageUpload() {
-            if (bgImage.files.length) {
-                backgroundImageFile = bgImage.files[0];
+            if (bgImageInput.files.length) {
+                backgroundImageFile = bgImageInput.files[0];
                 showStatus('Background image selected', 'success');
             }
         }
-        
-        function formatFileSize(bytes) {
-            if (bytes === 0) return '0 Bytes';
-            const k = 1024;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(k));
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-        
-        function showStatus(message, type) {
-            statusMessage.textContent = message;
-            statusMessage.className = 'status status-' + type;
-            statusMessage.style.display = 'block';
+
+        function updateBackgroundSettings() {
+            bgColorGroup.style.display = 'none';
+            bgImageGroup.style.display = 'none';
+            bgBlurGroup.style.display = 'none';
             
-            // Hide after 5 seconds if not processing
-            if (type !== 'processing') {
-                setTimeout(() => {
-                    statusMessage.style.display = 'none';
-                }, 5000);
+            switch(bgMode.value) {
+                case 'color':
+                    bgColorGroup.style.display = 'block';
+                    break;
+                case 'image':
+                    bgImageGroup.style.display = 'block';
+                    break;
+                case 'blur':
+                    bgBlurGroup.style.display = 'block';
+                    break;
             }
         }
-        
-        function updateProgress(percent, message) {
-            progressBar.style.width = percent + '%';
-            progressPercent.textContent = percent + '%';
-            progressStatus.textContent = message;
+
+        function applyPreset(e) {
+            const preset = e.target.dataset.preset;
             
-            if (percent === 100) {
-                progressStatus.textContent = 'Processing complete!';
+            // Reset all buttons
+            presetButtons.forEach(btn => btn.classList.remove('active'));
+            // Activate current button
+            e.target.classList.add('active');
+            
+            switch(preset) {
+                case 'social-media':
+                    bgMode.value = 'blur';
+                    document.getElementById('bg-blur').value = 8;
+                    document.getElementById('blur-value').textContent = '8';
+                    document.getElementById('resolution').value = '1080';
+                    document.getElementById('fps').value = '30';
+                    break;
+                    
+                case 'presentation':
+                    bgMode.value = 'color';
+                    document.getElementById('bg-color').value = '#ffffff';
+                    document.getElementById('audio-mode').value = 'enhance';
+                    document.getElementById('audio-volume').value = 120;
+                    document.getElementById('volume-value').textContent = '120';
+                    break;
+                    
+                case 'podcast':
+                    bgMode.value = 'remove';
+                    document.getElementById('audio-mode').value = 'enhance';
+                    document.getElementById('audio-volume').value = 150;
+                    document.getElementById('volume-value').textContent = '150';
+                    break;
+                    
+                case 'green-screen':
+                    bgMode.value = 'remove';
+                    document.getElementById('resolution').value = '1080';
+                    break;
+                    
+                case 'blur-background':
+                    bgMode.value = 'blur';
+                    document.getElementById('bg-blur').value = 15;
+                    document.getElementById('blur-value').textContent = '15';
+                    break;
             }
+            
+            updateBackgroundSettings();
+            showStatus(`"${e.target.textContent}" preset applied`, 'success');
         }
-        
+
         async function processVideo() {
+            if (!originalVideoFile) {
+                showStatus('Please select a video file first', 'error');
+                return;
+            }
+            
             if (processing) return;
             processing = true;
-            cancelRequested = false;
             
             // Show processing UI
             progressContainer.style.display = 'block';
             processBtn.disabled = true;
-            cancelBtn.style.display = 'inline-block';
             showStatus('Starting video processing...', 'processing');
             
             try {
                 // Load FFmpeg if not loaded
                 if (!ffmpeg.isLoaded()) {
-                    updateProgress(5, "Loading FFmpeg...");
+                    updateProgress(10, 'Loading FFmpeg...');
                     await ffmpeg.load();
                 }
 
-                // Write the file to FFmpeg file system
-                updateProgress(10, "Preparing video...");
-                ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(originalVideoFile));
+                // Write files to FFmpeg file system
+                updateProgress(20, 'Preparing files...');
+                await ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(originalVideoFile));
+                
+                if (newAudioFile) {
+                    await ffmpeg.FS('writeFile', 'audio.mp3', await fetchFile(newAudioFile));
+                }
+                
+                if (backgroundImageFile) {
+                    await ffmpeg.FS('writeFile', 'background.png', await fetchFile(backgroundImageFile));
+                }
 
-                // Build FFmpeg command based on settings
-                const command = ['-i', 'input.mp4'];
-                const filters = [];
+                // Build FFmpeg command
+                let command = ['-i', 'input.mp4'];
+                let outputOptions = [];
                 
                 // Background processing
-                if (bgMode.value === 'remove') {
-                    filters.push('chromakey=color=green:similarity=0.1:blend=0.1');
-                } 
-                else if (bgMode.value === 'blur') {
-                    const blurAmount = bgBlur.value;
-                    filters.push(`split[original][blurred];[blurred]boxblur=${blurAmount}[bg];[original][bg]overlay`);
-                }
-                else if (bgMode.value === 'color') {
-                    const color = bgColor.value.substring(1); // Remove # from hex
-                    filters.push(`color=c=${color}:s=1280x720[bg];[0:v]scale=1280:-1[fg];[bg][fg]overlay`);
-                }
-                else if (bgMode.value === 'image' && backgroundImageFile) {
-                    await ffmpeg.FS('writeFile', 'background.png', await fetchFile(backgroundImageFile));
-                    command.push('-i', 'background.png');
-                    filters.push(`[1:v]scale=1280:720[bg];[0:v]scale=1280:-1[fg];[bg][fg]overlay`);
-                }
-                
-                // Add filters if any
-                if (filters.length > 0) {
-                    command.push('-vf', filters.join(','));
+                switch(bgMode.value) {
+                    case 'remove':
+                        // Simple chroma key (for demo purposes)
+                        command.push('-vf', 'chromakey=color=green:similarity=0.1');
+                        outputOptions.push('-c:v', 'libvpx-vp9', '-auto-alt-ref', '0');
+                        break;
+                        
+                    case 'blur':
+                        const blurAmount = document.getElementById('bg-blur').value;
+                        command.push('-vf', `boxblur=${blurAmount}`);
+                        break;
+                        
+                    case 'color':
+                        const color = document.getElementById('bg-color').value.substring(1);
+                        command.push('-vf', `color=c=${color}:s=1280x720[bg];[0:v]scale=1280:-1[fg];[bg][fg]overlay`);
+                        break;
+                        
+                    case 'image':
+                        command.push('-i', 'background.png');
+                        command.push('-filter_complex', '[1:v]scale=1280:720[bg];[0:v]scale=1280:-1[fg];[bg][fg]overlay');
+                        break;
                 }
                 
                 // Audio processing
-                if (audioMode.value === 'remove') {
-                    command.push('-an');
-                } 
-                else if (audioMode.value === 'modify') {
-                    const pitch = document.getElementById('audio-pitch').value;
-                    const speed = document.getElementById('audio-speed').value;
-                    command.push('-af', `asetrate=44100*${pitch/100},aresample=44100,atempo=${speed/100}`);
-                } 
-                else if (audioMode.value === 'replace' && newAudioFile) {
-                    await ffmpeg.FS('writeFile', 'new_audio.mp3', await fetchFile(newAudioFile));
-                    command.push('-i', 'new_audio.mp3', '-map', '0:v', '-map', '1:a', '-shortest');
+                switch(audioMode.value) {
+                    case 'remove':
+                        command.push('-an');
+                        break;
+                        
+                    case 'replace':
+                        if (newAudioFile) {
+                            command.push('-i', 'audio.mp3');
+                            command.push('-map', '0:v');
+                            command.push('-map', '1:a');
+                            command.push('-shortest');
+                        }
+                        break;
+                        
+                    case 'enhance':
+                        const volume = document.getElementById('audio-volume').value / 100;
+                        command.push('-af', `volume=${volume},highpass=f=200,lowpass=f=3000`);
+                        break;
                 }
                 
-                // Output settings
-                command.push('-c:v', 'libx264');
-                command.push('-preset', 'fast');
+                // Video quality
+                const resolution = document.getElementById('resolution').value;
+                if (resolution !== 'original') {
+                    command.push('-s', `${resolution === '1080' ? '1920x1080' : resolution === '720' ? '1280x720' : '854x480'}`);
+                }
+                
+                const fps = document.getElementById('fps').value;
+                if (fps !== 'original') {
+                    command.push('-r', fps);
+                }
+                
+                // Output options
+                command.push(...outputOptions);
+                command.push('-movflags', '+faststart');
                 command.push('output.mp4');
                 
                 // Run FFmpeg command
-                updateProgress(20, "Processing video...");
+                updateProgress(30, 'Processing video...');
                 await ffmpeg.run(...command);
-
-                // Get the output file
-                updateProgress(90, "Finalizing output...");
+                
+                // Simulate progress (in a real app you would use actual progress events)
+                for (let i = 40; i <= 90; i += 10) {
+                    updateProgress(i, `Processing (${i}%)`);
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
+                // Get output file
+                updateProgress(95, 'Finalizing output...');
                 const data = ffmpeg.FS('readFile', 'output.mp4');
                 editedVideoBlob = new Blob([data.buffer], { type: 'video/mp4' });
-
+                
+                // Clean up
+                ffmpeg.FS('unlink', 'input.mp4');
+                if (newAudioFile) ffmpeg.FS('unlink', 'audio.mp3');
+                if (backgroundImageFile) ffmpeg.FS('unlink', 'background.png');
+                ffmpeg.FS('unlink', 'output.mp4');
+                
                 // Complete
                 updateProgress(100, 'Processing complete!');
                 showStatus('Video processing completed successfully!', 'success');
-
-                // Create edited video preview
-                const videoURL = URL.createObjectURL(editedVideoBlob);
-                editedVideoElement.src = videoURL;
+                
+                // Show preview
+                editedVideoElement.src = URL.createObjectURL(editedVideoBlob);
                 previewSection.style.display = 'block';
-
+                previewSection.scrollIntoView({ behavior: 'smooth' });
+                
             } catch (error) {
                 showStatus(`Error during processing: ${error.message}`, 'error');
                 console.error('Processing error:', error);
             } finally {
                 processing = false;
                 processBtn.disabled = false;
-                cancelBtn.style.display = 'none';
-                
-                // Clean up
-                try {
-                    ffmpeg.FS('unlink', 'input.mp4');
-                    ffmpeg.FS('unlink', 'output.mp4');
-                    if (newAudioFile) ffmpeg.FS('unlink', 'new_audio.mp3');
-                    if (backgroundImageFile) ffmpeg.FS('unlink', 'background.png');
-                } catch (e) {
-                    console.log('Cleanup error:', e);
-                }
             }
         }
 
@@ -929,43 +844,36 @@
             }
             
             const blobToDownload = editedVideoBlob || originalVideoFile;
-            const fileName = editedVideoBlob ? `edited-video-${Date.now()}.mp4` : originalVideoFile.name;
+            const fileName = editedVideoBlob ? `edited-${Date.now()}.mp4` : originalVideoFile.name;
             
             const a = document.createElement('a');
-            const url = URL.createObjectURL(blobToDownload);
-            a.href = url;
+            a.href = URL.createObjectURL(blobToDownload);
             a.download = fileName;
             document.body.appendChild(a);
             a.click();
             setTimeout(() => {
                 document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+                URL.revokeObjectURL(a.href);
             }, 100);
         }
-        
+
         function resetTool() {
             // Reset file inputs
             videoInput.value = '';
             audioInput.value = '';
-            bgImage.value = '';
+            bgImageInput.value = '';
             originalVideoFile = null;
             newAudioFile = null;
             backgroundImageFile = null;
             editedVideoBlob = null;
             
             // Reset UI
-            videoInfo.style.display = 'none';
-            videoInfo.innerHTML = '';
-            audioInfo.style.display = 'none';
-            audioInfo.innerHTML = '';
-            
-            // Reset videos
+            document.getElementById('video-info').style.display = 'none';
+            document.getElementById('audio-info').style.display = 'none';
             originalVideoElement.src = '';
             editedVideoElement.src = '';
-            
-            // Hide sections
-            progressContainer.style.display = 'none';
             previewSection.style.display = 'none';
+            progressContainer.style.display = 'none';
             
             // Reset progress
             progressBar.style.width = '0%';
@@ -973,20 +881,45 @@
             progressStatus.textContent = 'Starting processing...';
             statusMessage.style.display = 'none';
             
-            // Reset settings
-            bgMode.value = 'remove';
-            bgColorGroup.style.display = 'none';
-            bgImageGroup.style.display = 'none';
-            bgBlur.disabled = true;
-            bgBlur.value = '5';
-            blurValue.textContent = '5';
-            
+            // Reset settings to default
+            bgMode.value = 'keep';
             audioMode.value = 'keep';
-            audioModifyGroup.style.display = 'none';
-            audioSpeedGroup.style.display = 'none';
+            document.getElementById('resolution').value = 'original';
+            document.getElementById('fps').value = 'original';
+            document.getElementById('audio-volume').value = 100;
+            document.getElementById('volume-value').textContent = '100';
             
-            // Re-enable process button
+            // Reset preset buttons
+            presetButtons.forEach(btn => btn.classList.remove('active'));
+            
+            updateBackgroundSettings();
             processBtn.disabled = false;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = 'status status-' + type;
+            statusMessage.style.display = 'block';
+            
+            if (type !== 'processing') {
+                setTimeout(() => {
+                    statusMessage.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        function updateProgress(percent, message) {
+            progressBar.style.width = percent + '%';
+            progressPercent.textContent = percent + '%';
+            progressStatus.textContent = message;
         }
     </script>
 </body>
