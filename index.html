@@ -616,8 +616,23 @@
         const { createFFmpeg, fetchFile } = FFmpeg;
         const ffmpeg = createFFmpeg({ 
             log: true,
-            corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js'
+            corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
+            progress: ({ ratio }) => {
+                // Convert ratio (0-1) to percentage (0-100)
+                const percent = Math.round(ratio * 100);
+                updateProgress(percent, getProcessingStep(percent));
+            }
         });
+
+        // Get processing step message based on percentage
+        function getProcessingStep(percent) {
+            if (percent < 10) return "Initializing...";
+            if (percent < 30) return "Loading video...";
+            if (percent < 50) return "Analyzing frames...";
+            if (percent < 70) return "Removing background...";
+            if (percent < 90) return "Applying effects...";
+            return "Finalizing output...";
+        }
 
         // Event Listeners
         videoInput.addEventListener('change', handleVideoUpload);
@@ -815,20 +830,66 @@
             try {
                 // Load FFmpeg if not loaded
                 if (!ffmpeg.isLoaded()) {
-                    updateProgress(10, 'Loading FFmpeg...');
+                    updateProgress(5, "Loading FFmpeg...");
                     await ffmpeg.load();
                 }
 
                 // Write the file to FFmpeg file system
-                updateProgress(20, 'Preparing video...');
+                updateProgress(10, "Preparing video...");
                 ffmpeg.FS('writeFile', 'input.mp4', await fetchFile(originalVideoFile));
 
-                // Simple processing command (just re-encode for demo)
-                updateProgress(30, 'Processing video...');
-                await ffmpeg.run('-i', 'input.mp4', '-c:v', 'libx264', '-preset', 'fast', 'output.mp4');
+                // Build FFmpeg command based on settings
+                const command = ['-i', 'input.mp4'];
+                const filters = [];
+                
+                // Background processing
+                if (bgMode.value === 'remove') {
+                    filters.push('chromakey=color=green:similarity=0.1:blend=0.1');
+                } 
+                else if (bgMode.value === 'blur') {
+                    const blurAmount = bgBlur.value;
+                    filters.push(`split[original][blurred];[blurred]boxblur=${blurAmount}[bg];[original][bg]overlay`);
+                }
+                else if (bgMode.value === 'color') {
+                    const color = bgColor.value.substring(1); // Remove # from hex
+                    filters.push(`color=c=${color}:s=1280x720[bg];[0:v]scale=1280:-1[fg];[bg][fg]overlay`);
+                }
+                else if (bgMode.value === 'image' && backgroundImageFile) {
+                    await ffmpeg.FS('writeFile', 'background.png', await fetchFile(backgroundImageFile));
+                    command.push('-i', 'background.png');
+                    filters.push(`[1:v]scale=1280:720[bg];[0:v]scale=1280:-1[fg];[bg][fg]overlay`);
+                }
+                
+                // Add filters if any
+                if (filters.length > 0) {
+                    command.push('-vf', filters.join(','));
+                }
+                
+                // Audio processing
+                if (audioMode.value === 'remove') {
+                    command.push('-an');
+                } 
+                else if (audioMode.value === 'modify') {
+                    const pitch = document.getElementById('audio-pitch').value;
+                    const speed = document.getElementById('audio-speed').value;
+                    command.push('-af', `asetrate=44100*${pitch/100},aresample=44100,atempo=${speed/100}`);
+                } 
+                else if (audioMode.value === 'replace' && newAudioFile) {
+                    await ffmpeg.FS('writeFile', 'new_audio.mp3', await fetchFile(newAudioFile));
+                    command.push('-i', 'new_audio.mp3', '-map', '0:v', '-map', '1:a', '-shortest');
+                }
+                
+                // Output settings
+                command.push('-c:v', 'libx264');
+                command.push('-preset', 'fast');
+                command.push('output.mp4');
+                
+                // Run FFmpeg command
+                updateProgress(20, "Processing video...");
+                await ffmpeg.run(...command);
 
-                // Read the result
-                updateProgress(90, 'Finalizing...');
+                // Get the output file
+                updateProgress(90, "Finalizing output...");
                 const data = ffmpeg.FS('readFile', 'output.mp4');
                 editedVideoBlob = new Blob([data.buffer], { type: 'video/mp4' });
 
@@ -848,6 +909,16 @@
                 processing = false;
                 processBtn.disabled = false;
                 cancelBtn.style.display = 'none';
+                
+                // Clean up
+                try {
+                    ffmpeg.FS('unlink', 'input.mp4');
+                    ffmpeg.FS('unlink', 'output.mp4');
+                    if (newAudioFile) ffmpeg.FS('unlink', 'new_audio.mp3');
+                    if (backgroundImageFile) ffmpeg.FS('unlink', 'background.png');
+                } catch (e) {
+                    console.log('Cleanup error:', e);
+                }
             }
         }
 
